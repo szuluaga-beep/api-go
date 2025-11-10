@@ -111,9 +111,9 @@ func processUsuarios(c *gin.Context) {
 
 	duracion := time.Since(inicio)
 	c.JSON(http.StatusOK, gin.H{
-		"mensaje":           "Procesamiento completado",
-		"total_procesados":  procesados,
-		"duracion_ms":       duracion.Milliseconds(),
-		"modo":              "SECUENCIAL (sin concurrencia)",
+		"mensaje":          "Procesamiento completado",
+		"total_procesados": procesados,
+		"duracion_ms":      duracion.Milliseconds(),
+		"modo":             "SECUENCIAL (sin concurrencia)",
 	})
 }
