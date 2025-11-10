@@ -45,6 +45,10 @@ func init() {
 func main() {
 	router := gin.Default()
 
+	// Configurar proxies de forma segura
+	// Solo confiar en proxies específicos (en este caso ninguno en desarrollo)
+	router.SetTrustedProxies([]string{})
+
 	// Endpoints
 	router.GET("/usuarios", getUsuarios)
 	router.GET("/usuarios/:id", getUsuarioByID)
