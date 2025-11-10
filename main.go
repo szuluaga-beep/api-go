@@ -68,7 +68,7 @@ func getUsuarios(c *gin.Context) {
 func getUsuarioByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
-	
+
 	// Canal para recibir el resultado
 	resultChan := make(chan *Usuario)
 	var wg sync.WaitGroup
@@ -163,9 +163,9 @@ func processUsuarios(c *gin.Context) {
 
 	duracion := time.Since(inicio)
 	c.JSON(http.StatusOK, gin.H{
-		"mensaje":           "Procesamiento completado",
-		"total_procesados":  procesados,
-		"duracion_ms":       duracion.Milliseconds(),
-		"modo":              "CONCURRENTE (con Goroutines)",
+		"mensaje":          "Procesamiento completado",
+		"total_procesados": procesados,
+		"duracion_ms":      duracion.Milliseconds(),
+		"modo":             "CONCURRENTE (con Goroutines)",
 	})
 }
