@@ -29,34 +29,32 @@ func init() {
 		usuarios: make([]Usuario, 0),
 		nextID:   1,
 	}
+
+	// Crear 100 usuarios de prueba de forma síncrona
+	nombres := []string{"Juan", "María", "Carlos", "Ana", "Pedro", "Luis", "Rosa", "Miguel", "Carmen", "Javier",
+		"Isabel", "Francisco", "Dolores", "Manuel", "Angela", "Jose", "Elena", "Diego", "Pilar", "Antonio",
+		"Beatriz", "Ramon", "Teresa", "Andres", "Marta", "Ricardo", "Francisca", "Fernando", "Victoria", "Enrique",
+		"Susana", "Gabriel", "Margarita", "Raul", "Josefa", "Alberto", "Amparo", "Alfonso", "Concepcion", "Arturo",
+		"Antonia", "Ruben", "Esperanza", "Salvador", "Consuelo", "Eduardo", "Ascension", "Emilio", "Gloria", "Felipe",
+		"Rosario", "Alfredo", "Presentacion", "Guillermo", "Soledad", "Esteban", "Visitacion", "Ignacio", "Asuncion", "Julian"}
+
+	apellidos := []string{"García", "López", "Rodríguez", "Martínez", "Pérez", "Hernández", "Sánchez", "González", "Torres", "Flores",
+		"Reyes", "Ruiz", "Morales", "Rivera", "Gutierrez", "Ortiz", "Jimenez", "Diaz", "Cruz", "Vargas",
+		"Castro", "Salazar", "Romero", "Aguilar", "Cabrera", "Campos", "Carvajal", "Castillo", "Contreras", "Cordero"}
+
+	for i := 0; i < 100; i++ {
+		nombre := nombres[i%len(nombres)]
+		apellido := apellidos[i%len(apellidos)]
+		usuario := Usuario{
+			Nombre: nombre + " " + apellido + " " + string(rune(i+1)),
+			Email:  nombre + "." + apellido + string(rune(i+1)) + "@example.com",
+		}
+		usuarioService.CrearUsuario(usuario)
+	}
+	log.Println("100 Usuarios de prueba creados")
 }
 
 func main() {
-	// Inicializar 100 usuarios de prueba en una goroutine
-	go func() {
-		nombres := []string{"Juan", "María", "Carlos", "Ana", "Pedro", "Luis", "Rosa", "Miguel", "Carmen", "Javier",
-			"Isabel", "Francisco", "Dolores", "Manuel", "Angela", "Jose", "Elena", "Diego", "Pilar", "Antonio",
-			"Beatriz", "Ramon", "Teresa", "Andres", "Marta", "Ricardo", "Francisca", "Fernando", "Victoria", "Enrique",
-			"Susana", "Gabriel", "Margarita", "Raul", "Josefa", "Alberto", "Amparo", "Alfonso", "Concepcion", "Arturo",
-			"Antonia", "Ruben", "Esperanza", "Salvador", "Consuelo", "Eduardo", "Ascension", "Emilio", "Gloria", "Felipe",
-			"Rosario", "Alfredo", "Presentacion", "Guillermo", "Soledad", "Esteban", "Visitacion", "Ignacio", "Asuncion", "Julian"}
-
-		apellidos := []string{"García", "López", "Rodríguez", "Martínez", "Pérez", "Hernández", "Sánchez", "González", "Torres", "Flores",
-			"Reyes", "Ruiz", "Morales", "Rivera", "Gutierrez", "Ortiz", "Jimenez", "Diaz", "Cruz", "Vargas",
-			"Castro", "Salazar", "Romero", "Aguilar", "Cabrera", "Campos", "Carvajal", "Castillo", "Contreras", "Cordero"}
-
-		for i := 0; i < 100; i++ {
-			nombre := nombres[i%len(nombres)]
-			apellido := apellidos[i%len(apellidos)]
-			usuario := Usuario{
-				Nombre: nombre + " " + apellido + " " + string(rune(i+1)),
-				Email:  nombre + "." + apellido + string(rune(i+1)) + "@example.com",
-			}
-			usuarioService.CrearUsuario(usuario)
-		}
-		log.Println("100 Usuarios de prueba creados")
-	}()
-
 	router := gin.Default()
 
 	// Middleware para logging asíncrono
