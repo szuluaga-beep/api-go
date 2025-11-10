@@ -1,4 +1,168 @@
-# API REST en Go
+# API REST - Comparativa de Concurrencia en Go
+
+Este proyecto demuestra la diferencia entre una API REST sin concurrencia y otra implementada con Goroutines en Go.
+
+## 📋 Descripción
+
+El proyecto contiene una API REST que gestiona usuarios con 4 endpoints principales. La particularidad es que hay **dos ramas**:
+- **`master`**: Implementación sin concurrencia (secuencial)
+- **`concurrent`**: Implementación con Goroutines (paralelo)
+
+## 🚀 Endpoints
+
+### 1. GET `/usuarios`
+Obtiene la lista completa de 100 usuarios de prueba.
+
+```bash
+curl http://localhost:8080/usuarios
+```
+
+### 2. GET `/usuarios/:id`
+Obtiene un usuario específico por su ID. Simula procesamiento con delays.
+
+```bash
+curl http://localhost:8080/usuarios/5
+```
+
+**Diferencia de rendimiento:**
+- **Sin concurrencia**: ~1000ms (100 usuarios × 10ms)
+- **Con Goroutines**: ~10-50ms (ejecución paralela)
+
+### 3. GET `/usuarios/search?nombre=Juan`
+Busca usuarios que contengan el nombre especificado en su campo nombre.
+
+```bash
+curl "http://localhost:8080/usuarios/search?nombre=Juan"
+```
+
+**Diferencia de rendimiento:**
+- **Sin concurrencia**: ~500ms (100 usuarios × 5ms)
+- **Con Goroutines**: ~5-20ms (ejecución paralela)
+
+### 4. POST `/usuarios/process`
+Procesa todos los usuarios de forma secuencial o paralela, retornando el tiempo total.
+
+```bash
+curl -X POST http://localhost:8080/usuarios/process
+```
+
+**Diferencia de rendimiento:**
+- **Sin concurrencia**: ~5000ms (100 usuarios × 50ms)
+- **Con Goroutines**: ~50-100ms (ejecución paralela)
+
+## 🔀 Comparación de Ramas
+
+### Rama `master` (Sin Concurrencia)
+```go
+func processUsuarios(c *gin.Context) {
+    for range usuarios {
+        time.Sleep(50 * time.Millisecond)  // Secuencial
+        procesados++
+    }
+}
+```
+
+**Características:**
+- Procesamiento secuencial
+- Cada operación espera a que termine la anterior
+- Bajo uso de recursos pero lento
+- Ideal para operaciones que requieren orden garantizado
+
+### Rama `concurrent` (Con Goroutines)
+```go
+func processUsuarios(c *gin.Context) {
+    var wg sync.WaitGroup
+    
+    for range usuarios {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            time.Sleep(50 * time.Millisecond)  // Paralelo
+            procesados++
+        }()
+    }
+    
+    wg.Wait()  // Esperar a que terminen todas
+}
+```
+
+**Características:**
+- Procesamiento paralelo con Goroutines
+- Múltiples operaciones ejecutándose simultáneamente
+- Mayor consumo de recursos pero mucho más rápido
+- Sincronización con `sync.WaitGroup` y `sync.Mutex`
+
+## 💻 Cómo usar
+
+### Requisitos
+- Go 1.16+
+- Módulo: `github.com/gin-gonic/gin`
+
+### Instalación de dependencias
+```bash
+go mod download
+go mod tidy
+```
+
+### Ejecutar en rama `master` (sin concurrencia)
+```bash
+git checkout master
+go run main.go
+```
+
+### Ejecutar en rama `concurrent` (con Goroutines)
+```bash
+git checkout concurrent
+go run main.go
+```
+
+### Compilar ejecutable
+```bash
+go build -o api-go
+./api-go
+```
+
+El servidor estará disponible en `http://localhost:8080`
+
+## 📊 Resumen de Diferencias
+
+| Aspecto | Sin Concurrencia | Con Goroutines |
+|---------|-----------------|----------------|
+| **Búsqueda por ID (100 usuarios)** | ~1000ms | ~50ms |
+| **Búsqueda por nombre (100 usuarios)** | ~500ms | ~20ms |
+| **Procesamiento (100 usuarios)** | ~5000ms | ~100ms |
+| **Complejidad del código** | Simple | Requiere sync |
+| **Uso de CPU** | Bajo/Uniforme | Alto/Variable |
+| **Escalabilidad** | Limitada | Excelente |
+
+## 🔑 Conceptos Clave
+
+### Goroutines
+- Unidades de concurrencia muy ligeras de Go
+- No son threads del SO, Go las mapea inteligentemente
+- Ideal para operaciones I/O y CPU-bound paralelo
+
+### sync.WaitGroup
+- Sincroniza múltiples Goroutines
+- `Add()`: incrementa el contador
+- `Done()`: decrementa el contador
+- `Wait()`: espera a que el contador sea 0
+
+### sync.Mutex
+- Mutex (Mutual Exclusion) para proteger datos compartidos
+- `Lock()`: adquiere el bloqueo
+- `Unlock()`: libera el bloqueo
+
+## 📝 Notas
+
+- Los tiempos simulados (`time.Sleep`) son para demostración
+- En producción, estos serían operaciones reales (BD, APIs, cálculos)
+- La diferencia de rendimiento es mucho más notable con operaciones más lentas
+- El overhead de crear muchas Goroutines es mínimo comparado con threads
+
+## 🎯 Conclusión
+
+Este proyecto demuestra claramente cómo Go's Goroutines permiten escribir código concurrente altamente eficiente. La rama `concurrent` ejecuta la misma lógica pero en paralelo, logrando speedups dramáticos sin complejidad excesiva.
 
 Una API REST simple construida con Go y el framework Gin para la gestión de usuarios.
 
