@@ -1,83 +1,52 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Usuario struct {
-	ID    int    `json:"id"`
+	ID     int    `json:"id"`
 	Nombre string `json:"nombre"`
-	Email string `json:"email"`
+	Email  string `json:"email"`
 }
 
 var usuarios []Usuario
+
+func init() {
+	// Crear 100 usuarios de prueba
+	nombres := []string{"Juan", "María", "Carlos", "Ana", "Pedro", "Luis", "Rosa", "Miguel", "Carmen", "Javier",
+		"Isabel", "Francisco", "Dolores", "Manuel", "Angela", "Jose", "Elena", "Diego", "Pilar", "Antonio",
+		"Beatriz", "Ramon", "Teresa", "Andres", "Marta", "Ricardo", "Francisca", "Fernando", "Victoria", "Enrique",
+		"Susana", "Gabriel", "Margarita", "Raul", "Josefa", "Alberto", "Amparo", "Alfonso", "Concepcion", "Arturo",
+		"Antonia", "Ruben", "Esperanza", "Salvador", "Consuelo", "Eduardo", "Ascension", "Emilio", "Gloria", "Felipe",
+		"Rosario", "Alfredo", "Presentacion", "Guillermo", "Soledad", "Esteban", "Visitacion", "Ignacio", "Asuncion", "Julian"}
+
+	apellidos := []string{"García", "López", "Rodríguez", "Martínez", "Pérez", "Hernández", "Sánchez", "González", "Torres", "Flores",
+		"Reyes", "Ruiz", "Morales", "Rivera", "Gutierrez", "Ortiz", "Jimenez", "Diaz", "Cruz", "Vargas",
+		"Castro", "Salazar", "Romero", "Aguilar", "Cabrera", "Campos", "Carvajal", "Castillo", "Contreras", "Cordero"}
+
+	for i := 1; i <= 100; i++ {
+		nombre := nombres[(i-1)%len(nombres)]
+		apellido := apellidos[(i-1)%len(apellidos)]
+		usuario := Usuario{
+			ID:     i,
+			Nombre: nombre + " " + apellido,
+			Email:  nombre + "." + apellido + "@example.com",
+		}
+		usuarios = append(usuarios, usuario)
+	}
+}
 
 func main() {
 	router := gin.Default()
 
 	router.GET("/usuarios", getUsuarios)
-	router.GET("/usuarios/:id", getUsuario)
-	router.POST("/usuarios", crearUsuario)
-	router.PUT("/usuarios/:id", actualizarUsuario)
-	router.DELETE("/usuarios/:id", eliminarUsuario)
 
 	router.Run(":8080")
 }
 
 func getUsuarios(c *gin.Context) {
 	c.JSON(http.StatusOK, usuarios)
-}
-
-func getUsuario(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	for _, usuario := range usuarios {
-		if usuario.ID == id {
-			c.JSON(http.StatusOK, usuario)
-			return
-		}
-	}
-	c.JSON(http.StatusNotFound, gin.H{"error": "No encontrado"})
-}
-
-func crearUsuario(c *gin.Context) {
-	var usuario Usuario
-	if err := c.ShouldBindJSON(&usuario); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	usuario.ID = len(usuarios) + 1
-	usuarios = append(usuarios, usuario)
-	c.JSON(http.StatusCreated, usuario)
-}
-
-func actualizarUsuario(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	var usuario Usuario
-	if err := c.ShouldBindJSON(&usuario); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	for i, u := range usuarios {
-		if u.ID == id {
-			usuario.ID = id
-			usuarios[i] = usuario
-			c.JSON(http.StatusOK, usuario)
-			return
-		}
-	}
-	c.JSON(http.StatusNotFound, gin.H{"error": "No encontrado"})
-}
-
-func eliminarUsuario(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	for i, usuario := range usuarios {
-		if usuario.ID == id {
-			usuarios = append(usuarios[:i], usuarios[i+1:]...)
-			c.JSON(http.StatusOK, gin.H{"mensaje": "Eliminado"})
-			return
-		}
-	}
-	c.JSON(http.StatusNotFound, gin.H{"error": "No encontrado"})
 }
