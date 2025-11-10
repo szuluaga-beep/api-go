@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -59,23 +60,45 @@ func getUsuarios(c *gin.Context) {
 	c.JSON(http.StatusOK, usuarios)
 }
 
-// GET /usuarios/:id - Obtiene un usuario por ID
+// GET /usuarios/:id - Obtiene un usuario por ID con Goroutines
 func getUsuarioByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, _ := strconv.Atoi(idStr)
+	
+	// Canal para recibir el resultado
+	resultChan := make(chan *Usuario)
+	var wg sync.WaitGroup
 
+	// Lanzar Goroutines para buscar en paralelo
 	for _, usuario := range usuarios {
-		// Simular procesamiento lento sin concurrencia
-		time.Sleep(10 * time.Millisecond)
-		if usuario.ID == id {
-			c.JSON(http.StatusOK, usuario)
+		wg.Add(1)
+		go func(u Usuario) {
+			defer wg.Done()
+			// Simular procesamiento con Goroutines
+			time.Sleep(10 * time.Millisecond)
+			if u.ID == id {
+				resultChan <- &u
+			}
+		}(usuario)
+	}
+
+	// Goroutine para cerrar el canal cuando terminen todas
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	// Intentar recibir resultado
+	for resultado := range resultChan {
+		if resultado != nil {
+			c.JSON(http.StatusOK, resultado)
 			return
 		}
 	}
 	c.JSON(http.StatusNotFound, gin.H{"error": "usuario no encontrado"})
 }
 
-// GET /usuarios/search?nombre=Juan - Busca usuarios por nombre
+// GET /usuarios/search?nombre=Juan - Busca usuarios por nombre con Goroutines
 func searchUsuarios(c *gin.Context) {
 	nombre := c.Query("nombre")
 	if nombre == "" {
@@ -84,13 +107,26 @@ func searchUsuarios(c *gin.Context) {
 	}
 
 	var resultados []Usuario
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	// Lanzar Goroutines para búsqueda paralela
 	for _, usuario := range usuarios {
-		// Simular procesamiento de búsqueda sin concurrencia
-		time.Sleep(5 * time.Millisecond)
-		if strings.Contains(strings.ToLower(usuario.Nombre), strings.ToLower(nombre)) {
-			resultados = append(resultados, usuario)
-		}
+		wg.Add(1)
+		go func(u Usuario) {
+			defer wg.Done()
+			// Simular procesamiento de búsqueda con Goroutines
+			time.Sleep(5 * time.Millisecond)
+			if strings.Contains(strings.ToLower(u.Nombre), strings.ToLower(nombre)) {
+				mu.Lock()
+				resultados = append(resultados, u)
+				mu.Unlock()
+			}
+		}(usuario)
 	}
+
+	// Esperar a que terminen todas las Goroutines
+	wg.Wait()
 
 	c.JSON(http.StatusOK, gin.H{
 		"total":    len(resultados),
@@ -98,22 +134,34 @@ func searchUsuarios(c *gin.Context) {
 	})
 }
 
-// POST /usuarios/process - Procesa usuarios de forma secuencial
+// POST /usuarios/process - Procesa usuarios con Goroutines (paralelo)
 func processUsuarios(c *gin.Context) {
 	inicio := time.Now()
+	var wg sync.WaitGroup
 	procesados := 0
+	var mu sync.Mutex
 
+	// Lanzar Goroutines para procesamiento paralelo
 	for range usuarios {
-		// Simular procesamiento pesado - sin concurrencia
-		time.Sleep(50 * time.Millisecond)
-		procesados++
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			// Simular procesamiento pesado con Goroutines
+			time.Sleep(50 * time.Millisecond)
+			mu.Lock()
+			procesados++
+			mu.Unlock()
+		}()
 	}
+
+	// Esperar a que terminen todas las Goroutines
+	wg.Wait()
 
 	duracion := time.Since(inicio)
 	c.JSON(http.StatusOK, gin.H{
 		"mensaje":           "Procesamiento completado",
 		"total_procesados":  procesados,
 		"duracion_ms":       duracion.Milliseconds(),
-		"modo":              "SECUENCIAL (sin concurrencia)",
+		"modo":              "CONCURRENTE (con Goroutines)",
 	})
 }
