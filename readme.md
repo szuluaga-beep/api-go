@@ -38,8 +38,7 @@ El servidor se iniciará en `http://localhost:8080`
 
 ### Ejecutar en modo producción
 ```bash
-go build -o api-go.exe main.go
-./api-go.exe
+go build -o mi-api
 ```
 
 ## Endpoints de la API
