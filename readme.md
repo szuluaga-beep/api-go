@@ -1,13 +1,18 @@
-# API REST en Go
+# API REST en Go con Concurrencia
 
-Una API REST simple construida con Go y el framework Gin para la gestión de usuarios.
+Una API REST avanzada construida con Go y el framework Gin para la gestión de usuarios, implementando **goroutines** y concurrencia para alto rendimiento.
 
-## Características
+## 🚀 Características
 
-- CRUD completo para usuarios (Crear, Leer, Actualizar, Eliminar)
-- API RESTful con endpoints JSON
-- Almacenamiento en memoria
-- Construido con Gin Framework
+- **CRUD completo** para usuarios (Crear, Leer, Actualizar, Eliminar)
+- **API RESTful** con endpoints JSON
+- **Concurrencia con Goroutines** - Operaciones asíncronas y thread-safe
+- **Almacenamiento en memoria** con protección de concurrencia (sync.RWMutex)
+- **Logging asíncrono** para mejor rendimiento
+- **Inicialización en background** con datos de ejemplo
+- **Endpoint de estadísticas** en tiempo real
+- **Construido con Gin Framework**
+- **Thread-safe** - Manejo seguro de múltiples requests concurrentes
 
 ## Requisitos Previos
 
@@ -38,18 +43,20 @@ El servidor se iniciará en `http://localhost:8080`
 
 ### Ejecutar en modo producción
 ```bash
-go build -o mi-api
+go build -o mi-api main.go
+./mi-api
 ```
 
-## Endpoints de la API
+## 🎯 Endpoints de la API
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/usuarios` | Obtener todos los usuarios |
-| GET | `/usuarios/:id` | Obtener un usuario por ID |
-| POST | `/usuarios` | Crear un nuevo usuario |
-| PUT | `/usuarios/:id` | Actualizar un usuario existente |
-| DELETE | `/usuarios/:id` | Eliminar un usuario |
+| Método | Endpoint | Descripción | Concurrencia |
+|--------|----------|-------------|--------------|
+| GET | `/usuarios` | Obtener todos los usuarios | ✅ Asíncrono |
+| GET | `/usuarios/:id` | Obtener un usuario por ID | ✅ Búsqueda asíncrona |
+| POST | `/usuarios` | Crear un nuevo usuario | ✅ Creación asíncrona |
+| PUT | `/usuarios/:id` | Actualizar un usuario existente | ✅ Actualización asíncrona |
+| DELETE | `/usuarios/:id` | Eliminar un usuario | ✅ Eliminación asíncrona |
+| GET | `/usuarios/stats` | **NUEVO** - Estadísticas del sistema | ✅ Procesamiento asíncrono |
 
 ## Ejemplos de Uso
 
@@ -88,27 +95,91 @@ curl -X PUT http://localhost:8080/usuarios/1 \
 curl -X DELETE http://localhost:8080/usuarios/1
 ```
 
-## Estructura del Proyecto
+### 6. **NUEVO** - Obtener estadísticas del sistema
+```bash
+curl http://localhost:8080/usuarios/stats
+```
+
+**Respuesta esperada:**
+```json
+{
+  "total_usuarios": 3,
+  "usuario_mas_reciente": {
+    "id": 3,
+    "nombre": "Carlos López",
+    "email": "carlos@example.com",
+    "creado": "2025-11-10T10:30:45Z"
+  },
+  "timestamp": "2025-11-10T10:35:22Z"
+}
+```
+
+## 📁 Estructura del Proyecto
 
 ```
 api-go/
-├── main.go          # Archivo principal con la lógica de la API
+├── main.go          # Archivo principal con lógica de API + Goroutines
 ├── go.mod           # Definición del módulo y dependencias
 └── readme.md        # Este archivo
 ```
 
-## Estructura de Datos
+## 🏗️ Arquitectura de Concurrencia
 
-### Usuario
+### UsuarioService
+- **Thread-safe** con `sync.RWMutex`
+- **Lecturas concurrentes** permitidas (`RLock()`)
+- **Escrituras exclusivas** (`Lock()`)
+- **Operaciones asíncronas** con goroutines
+
+### Características de Concurrencia
+- ✅ **Inicialización asíncrona** - Datos de ejemplo cargados en background
+- ✅ **Logging no bloqueante** - Logs procesados en goroutines separadas
+- ✅ **Operaciones de BD asíncronas** - Búsquedas y actualizaciones concurrentes
+- ✅ **Canales para comunicación** - `resultChan` y `errorChan`
+- ✅ **Select statements** - Manejo de respuestas concurrentes
+
+## 📊 Estructura de Datos
+
+### Usuario (Actualizada)
 ```json
 {
   "id": 1,
   "nombre": "Juan Pérez",
-  "email": "juan@example.com"
+  "email": "juan@example.com",
+  "creado": "2025-11-10T10:30:45Z"
 }
 ```
 
-## Comandos Útiles
+### Estadísticas del Sistema
+```json
+{
+  "total_usuarios": 3,
+  "usuario_mas_reciente": {
+    "id": 3,
+    "nombre": "Carlos López", 
+    "email": "carlos@example.com",
+    "creado": "2025-11-10T10:30:45Z"
+  },
+  "timestamp": "2025-11-10T10:35:22Z"
+}
+```
+
+## ⚡ Beneficios de Performance
+
+### Antes (Versión Síncrona)
+- ❌ Una operación a la vez
+- ❌ Logging bloqueante
+- ❌ Sin protección de concurrencia
+- ❌ Potenciales race conditions
+
+### Ahora (Con Goroutines)
+- ✅ **Múltiples operaciones simultáneas**
+- ✅ **Logging asíncrono** - No afecta tiempo de respuesta
+- ✅ **Thread-safe** - Operaciones concurrentes seguras
+- ✅ **Mejor escalabilidad** - Manejo eficiente de carga alta
+- ✅ **Inicialización no bloqueante** - Servidor inicia más rápido
+
+## 🛠️ Comandos Útiles
 
 ### Verificar versión de Go
 ```bash
@@ -130,7 +201,16 @@ go mod verify
 go mod tidy
 ```
 
-## Desarrollo
+### Ejecutar tests de concurrencia (opcional)
+```bash
+# Instalar herramienta de testing de concurrencia
+go install golang.org/x/tools/cmd/stress@latest
+
+# Test de stress
+stress go test -race ./...
+```
+
+## 🔧 Desarrollo
 
 ### Ejecutar con recarga automática (opcional)
 Para desarrollo, puedes usar `air` para recarga automática:
@@ -143,14 +223,25 @@ go install github.com/cosmtrek/air@latest
 air
 ```
 
-## Notas Importantes
+### Debugging de Goroutines
+```bash
+# Ejecutar con race detection
+go run -race main.go
 
-- Los datos se almacenan en memoria, por lo que se perderán al reiniciar el servidor
-- El puerto por defecto es 8080
-- La API no incluye autenticación ni validación avanzada
-- Este es un proyecto de demostración/aprendizaje
+# Compilar con race detection
+go build -race -o mi-api main.go
+```
 
-## Solución de Problemas
+## ⚠️ Notas Importantes
+
+- **Almacenamiento en memoria** - Los datos se perderán al reiniciar el servidor
+- **Puerto por defecto**: 8080
+- **Thread-safe** - Múltiples requests pueden ser procesados simultáneamente
+- **Goroutines activas** - El servidor utiliza concurrencia para mejor rendimiento
+- **Datos de ejemplo** - Se cargan automáticamente 3 usuarios al iniciar
+- **Este es un proyecto de demostración** de concurrencia en Go
+
+## 🛠️ Solución de Problemas
 
 ### Puerto en uso
 Si el puerto 8080 está ocupado, puedes cambiarlo modificando la línea en `main.go`:
@@ -165,7 +256,21 @@ go mod download
 go mod tidy
 ```
 
-## Contribución
+### Race Conditions
+Si sospechas problemas de concurrencia:
+```bash
+# Ejecutar con detección de race conditions
+go run -race main.go
+```
+
+### Problemas de Performance
+Para monitorear goroutines:
+```bash
+# Instalar pprof para profiling
+go tool pprof http://localhost:8080/debug/pprof/goroutine
+```
+
+## 🤝 Contribución
 
 1. Fork el proyecto
 2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
